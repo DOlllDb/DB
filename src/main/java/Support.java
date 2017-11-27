@@ -7,6 +7,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.IntStream;
 
 /**
  * Created by Maksim Nikelman on 26.11.17.
@@ -51,9 +52,15 @@ public class Support {
         instruments = new String[instrumentsQuantity];
         initialPrices = new double[instrumentsQuantity];
         for (int i = 0; i < instruments.length; i++) {
-            instruments[i] = "RU000" + new Random().nextInt(999999);
+            instruments[i] = "RU000" + generateNDigitsNumber(6);
             initialPrices[i] = ((double) new Random().nextInt(100000)) / 100;
         }
+    }
+
+    private static String generateNDigitsNumber(int digits) {
+        StringBuilder sb = new StringBuilder();
+        IntStream.range(0, digits).forEach(i -> sb.append(new Random().nextInt(10)));
+        return sb.toString();
     }
 
     /**
@@ -160,6 +167,7 @@ public class Support {
         Support.endDate = endDate;
         getEndDateLD();
     }
+
     public static String getEndDate() {
         return endDate;
     }

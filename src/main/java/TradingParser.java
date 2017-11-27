@@ -102,7 +102,7 @@ public class TradingParser {
      */
     public static void writeResult(String result) {
         File file = new File(Support.getOutputPath());
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter(file))) {
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(file,false))) {
             bw.write(result);
             bw.newLine();
         } catch (IOException e) {
