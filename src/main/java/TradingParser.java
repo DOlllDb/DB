@@ -1,5 +1,4 @@
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import io.vavr.control.Try;
 import org.junit.Assert;
 
 import java.io.*;
@@ -57,8 +56,19 @@ public class TradingParser {
     public static List<TradingEvents> parseCsvData() {
         File[] files = collectInputFiles();
         List<Callable<TradingEvents>> parsers = Arrays.stream(files).map(TradingFileParser::new).collect(Collectors.toList());
-        List<Future<TradingEvents>> futures = Try.of(() -> executor.invokeAll(parsers)).get();
-        return futures.parallelStream().filter(Future::isDone).map(f -> Try.of(() -> f.get(1, TimeUnit.MINUTES)).get()).collect(Collectors.toList());
+        try {
+            List<Future<TradingEvents>> futures = executor.invokeAll(parsers);
+            return futures.parallelStream()
+                    .filter(Future::isDone).map(f -> {
+                        try {
+                            return f.get(1, TimeUnit.MINUTES);
+                        } catch (Exception e) {
+                            throw new AutotestException(e);
+                        }
+                    }).collect(Collectors.toList());
+        } catch (Exception e) {
+            throw new AutotestException(e);
+        }
     }
 
     /**
@@ -85,14 +95,24 @@ public class TradingParser {
             }
         }
         resultsData.size();
-        List<Future<List<String>>> calcResultsFutures = Try.of(() -> executor.invokeAll(resultsData)).get();
-        List<List<String>> resultStrings = calcResultsFutures
-                .stream()
-                .filter(Future::isDone)
-                .map(f -> Try.of(() -> f.get(1, TimeUnit.MINUTES))
-                        .get())
-                .collect(Collectors.toList());
-        return resultStrings.stream().map(list -> list.stream().collect(Collectors.joining(System.lineSeparator()))).collect(Collectors.joining(System.lineSeparator()));
+        try {
+            List<Future<List<String>>> calcResultsFutures = executor.invokeAll(resultsData);
+            List<List<String>> resultStrings = calcResultsFutures
+                    .stream()
+                    .filter(Future::isDone)
+                    .map(f -> {
+                        try {
+                            return f.get(1, TimeUnit.MINUTES);
+                        } catch (Exception e) {
+                            throw new AutotestException(e);
+                        }
+                    }).collect(Collectors.toList());
+            return resultStrings.stream()
+                    .map(list -> list.stream().collect(Collectors.joining(System.lineSeparator())))
+                    .collect(Collectors.joining(System.lineSeparator()));
+        } catch (Exception e) {
+            throw new AutotestException(e);
+        }
     }
 
     /**

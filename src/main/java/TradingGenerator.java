@@ -1,5 +1,4 @@
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import io.vavr.control.Try;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -47,13 +46,22 @@ public class TradingGenerator {
             }
             start = start.plusDays(1);
         }
-        List<Future<String>> generatorsFutures = Try.of(() -> executor.invokeAll(generators)).get();
-        return generatorsFutures
-                .stream()
-                .filter(Future::isDone)
-                .map(f -> Try.of(() -> f.get(1, TimeUnit.MINUTES))
-                        .get())
-                .collect(Collectors.toList());
+        try {
+            List<Future<String>> generatorsFutures = executor.invokeAll(generators);
+            return generatorsFutures
+                    .stream()
+                    .filter(Future::isDone)
+                    .map(f -> {
+                        try {
+                            return f.get(1, TimeUnit.MINUTES);
+                        } catch (Exception e) {
+                            throw new AutotestException(e);
+                        }
+                    })
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            throw new AutotestException(e); // maybe replace with logger
+        }
     }
 
     /**

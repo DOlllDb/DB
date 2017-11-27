@@ -1,4 +1,3 @@
-import io.vavr.control.Try;
 import org.junit.Assert;
 
 import java.io.File;
@@ -90,8 +89,11 @@ public class Support {
     public static LocalDate getStartDateLD() {
         if (startDateLD == null) {
             Assert.assertFalse("Start date not specified", getStartDate() == null || getStartDate().isEmpty());
-            startDateLD = Try.of(() -> LocalDate.parse(getStartDate(), DATE_FORMAT))
-                    .getOrElseThrow(() -> new AutotestException("Couldn't parse start date " + startDate));
+            try {
+                startDateLD = LocalDate.parse(getStartDate(), DATE_FORMAT);
+            } catch (Exception e) {
+                throw new AutotestException("Couldn't parse start date "+ getStartDate());
+            }
         }
         return startDateLD;
     }
@@ -103,8 +105,11 @@ public class Support {
     public static LocalDate getEndDateLD() {
         if (endDateLD == null) {
             Assert.assertFalse("End date not specified", getEndDate() == null || getEndDate().isEmpty());
-            endDateLD = Try.of(() -> LocalDate.parse(getEndDate(), DATE_FORMAT))
-                    .getOrElseThrow(() -> new AutotestException("Couldn't parse end date "+ endDate));
+            try {
+                endDateLD = LocalDate.parse(getEndDate(), DATE_FORMAT);
+            } catch (Exception e) {
+                throw new AutotestException("Couldn't parse end date "+ getEndDate());
+            }
         }
         return endDateLD;
     }
